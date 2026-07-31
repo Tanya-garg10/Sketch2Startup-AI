@@ -1,0 +1,11 @@
+CREATE TABLE users (id uuid PRIMARY KEY, email text UNIQUE NOT NULL, created_at timestamptz DEFAULT now());
+CREATE TABLE projects (id uuid PRIMARY KEY, user_id uuid REFERENCES users(id), name text NOT NULL, status text DEFAULT 'draft', created_at timestamptz DEFAULT now());
+CREATE TABLE uploads (id uuid PRIMARY KEY, project_id uuid REFERENCES projects(id), storage_path text NOT NULL, mime_type text, created_at timestamptz DEFAULT now());
+CREATE TABLE prds (id uuid PRIMARY KEY, project_id uuid REFERENCES projects(id), content jsonb NOT NULL);
+CREATE TABLE architecture (id uuid PRIMARY KEY, project_id uuid REFERENCES projects(id), content jsonb NOT NULL);
+CREATE TABLE database_schemas (id uuid PRIMARY KEY, project_id uuid REFERENCES projects(id), sql text NOT NULL, erd jsonb);
+CREATE TABLE generated_apis (id uuid PRIMARY KEY, project_id uuid REFERENCES projects(id), content jsonb NOT NULL);
+CREATE TABLE generated_frontend (id uuid PRIMARY KEY, project_id uuid REFERENCES projects(id), content jsonb NOT NULL);
+CREATE TABLE generated_backend (id uuid PRIMARY KEY, project_id uuid REFERENCES projects(id), content jsonb NOT NULL);
+CREATE TABLE generated_tests (id uuid PRIMARY KEY, project_id uuid REFERENCES projects(id), content jsonb NOT NULL);
+CREATE TABLE generated_docs (id uuid PRIMARY KEY, project_id uuid REFERENCES projects(id), markdown text NOT NULL);

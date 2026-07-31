@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: sketch2startup-api
+    env: docker
+    rootDir: server
+    plan: starter
+    healthCheckPath: /health

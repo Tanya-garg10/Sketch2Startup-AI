@@ -1,9 +1,9 @@
 # Sketch2Startup AI
 
-Sketch2Startup AI transforms sketches, wireframes, whiteboard photos, and screenshots into deployment-ready full-stack applications. It combines a React 19 SaaS dashboard, FastAPI backend, PostgreSQL/Supabase persistence, storage, and an agentic generation pipeline.
+Sketch2Startup AI transforms sketches, wireframes, whiteboard photos, and screenshots into deployment-ready full-stack applications. It combines a React 19 SaaS dashboard, FastAPI backend, PostgreSQL persistence plus Firebase Auth/Storage, and an agentic generation pipeline.
 
 ## Features
-- Supabase authentication and protected app routes.
+- Firebase authentication and protected app routes.
 - Drag-and-drop sketch uploads with preview/progress.
 - Vision analysis JSON for UI elements.
 - Planner, architect, builder, database, API, testing, documentation, and deployment agents.
@@ -27,15 +27,15 @@ cd ../server && python -m venv .venv && source .venv/bin/activate && pip install
 ```
 
 ## Tech Stack
-React 19, Vite, TypeScript, Tailwind CSS, shadcn-style components, TanStack Query, Framer Motion, Monaco Editor, FastAPI, SQLAlchemy, Alembic, PostgreSQL, Supabase Auth/Storage, Vercel, Render, Docker.
+React 19, Vite, TypeScript, Tailwind CSS, shadcn-style components, TanStack Query, Framer Motion, Monaco Editor, FastAPI, SQLAlchemy, Alembic, PostgreSQL, Firebase Auth/Storage, Vercel, Render, Docker.
 
 ## Environment Variables
-See `.env.example` for `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `DATABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`, and CORS settings.
+See `.env.example` for `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`, `DATABASE_URL`, `FIREBASE_SERVICE_ACCOUNT_JSON`, `OPENAI_API_KEY`, and CORS settings.
 
 ## Deployment
 - Frontend: Vercel using `client/vercel.json`.
 - Backend: Render using `render.yaml` or Dockerfile.
-- Database/Storage/Auth: Supabase project with SQL from `server/app/db/schema.sql`.
+- Database/Storage/Auth: Firebase project for Auth/Storage and PostgreSQL using SQL from `server/app/db/schema.sql`.
 
 ## Screenshots
 - `docs/screenshots/landing.png` placeholder

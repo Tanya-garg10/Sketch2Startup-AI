@@ -1,1 +1,35 @@
-{"scripts":{"dev":"vite","build":"tsc -b && vite build","lint":"eslint .","test":"vitest run"},"dependencies":{"@vitejs/plugin-react":"latest","vite":"latest","typescript":"latest","react":"latest","react-dom":"latest","react-router-dom":"latest","@tanstack/react-query":"latest","react-hook-form":"latest","zod":"latest","framer-motion":"latest","@monaco-editor/react":"latest","lucide-react":"latest","@supabase/supabase-js":"latest","tailwindcss":"latest","@tailwindcss/vite":"latest","class-variance-authority":"latest","clsx":"latest","tailwind-merge":"latest"},"devDependencies":{"eslint":"latest","vitest":"latest","@types/react":"latest","@types/react-dom":"latest"},"type":"module"}
+{
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@monaco-editor/react": "latest",
+    "@tailwindcss/vite": "latest",
+    "@tanstack/react-query": "latest",
+    "@vitejs/plugin-react": "latest",
+    "class-variance-authority": "latest",
+    "clsx": "latest",
+    "firebase": "latest",
+    "framer-motion": "latest",
+    "lucide-react": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "react-hook-form": "latest",
+    "react-router-dom": "latest",
+    "tailwind-merge": "latest",
+    "tailwindcss": "latest",
+    "typescript": "latest",
+    "vite": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "eslint": "latest",
+    "vitest": "latest"
+  }
+}

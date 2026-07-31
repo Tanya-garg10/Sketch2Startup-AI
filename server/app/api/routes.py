@@ -14,11 +14,11 @@ def create_project(payload:ProjectCreate, db:Session=Depends(get_db)):
 def projects(db:Session=Depends(get_db)):
     return db.query(Project).order_by(Project.created_at.desc()).limit(20).all()
 @router.post("/uploads")
-async def upload(file:UploadFile=File(...)): return {"filename":file.filename,"storage":"supabase-ready","progress":100}
+async def upload(file:UploadFile=File(...)): return {"filename":file.filename,"storage":"firebase-ready","progress":100}
 @router.post("/analyze")
 async def analyze(file:UploadFile=File(...)): return analyze_upload(file.filename or "upload")
 for path,agent in [("/prd","planner"),("/architecture","architect"),("/database","database"),("/apis","api"),("/frontend","builder"),("/backend","builder"),("/tests","tester"),("/docs","documentation")]:
     async def endpoint(payload:AgentRun, agent=agent): return run_agent(agent,payload.prompt)
     router.add_api_route(path, endpoint, methods=["POST"])
 @router.post("/auth")
-def auth_placeholder(): return {"provider":"supabase","status":"configured-by-client"}
+def auth_placeholder(): return {"provider":"firebase","status":"configured-by-client"}

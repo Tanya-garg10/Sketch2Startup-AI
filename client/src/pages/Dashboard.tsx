@@ -1,0 +1,7 @@
+import { useQuery } from "@tanstack/react-query";import { Card } from "../components/ui/card";import { Button } from "../components/ui/button";import { api } from "../lib/api";
+const agents=["Planner","Architect","Builder","Database","API","Testing","Documentation","Deployment"];
+export function Dashboard(){const {data}=useQuery({queryKey:["projects"],queryFn:()=>api<any[]>("/projects")});return <div><h2 className="text-3xl font-bold">Dashboard</h2><div className="mt-6 grid gap-4 lg:grid-cols-3"><Card><h3 className="font-bold">Upload Sketch</h3><p className="my-4 text-slate-400">PNG, JPG, JPEG, PDF, whiteboards and screenshots.</p><Button>New Upload</Button></Card><Card><h3 className="font-bold">Recent Projects</h3>{(data??[]).slice(0,4).map(p=><p className="mt-2" key={p.id}>{p.name}</p>)}</Card><Card><h3 className="font-bold">Notifications</h3><p className="mt-2 text-cyan-300">Generation pipeline ready.</p></Card></div><div className="mt-6 grid gap-4 lg:grid-cols-2"><Card><h3 className="font-bold">Workflow Timeline</h3>{agents.map((a,i)=><div className="mt-3 flex items-center gap-3" key={a}><span className="grid size-8 place-items-center rounded-full bg-violet-600">{i+1}</span><span>{a} Agent</span><span className="ml-auto text-cyan-300">idle</span></div>)}</Card><Card><h3 className="font-bold">Generated Files</h3><pre className="mt-3 text-sm text-slate-300">/prd.md
+/schema.sql
+/api.py
+/App.tsx
+/tests</pre></Card></div></div>}

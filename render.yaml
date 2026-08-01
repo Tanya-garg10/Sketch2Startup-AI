@@ -2,6 +2,35 @@ services:
   - type: web
     name: sketch2startup-api
     env: docker
-    rootDir: server
+    dockerContext: ./server
+    dockerfilePath: ./server/Dockerfile
     plan: starter
+    region: oregon
     healthCheckPath: /health
+    autoDeploy: false
+    
+    # Environment variables
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_STORAGE_BUCKET
+        sync: false
+      - key: FIREBASE_SERVICE_ACCOUNT_JSON
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        value: https://sketch2startup-demo.vercel.app,https://sketch2startup.ai
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: PORT
+        value: 8000
+
+databases:
+  - name: sketch2startup-db
+    databaseName: sketch2startup
+    user: sketch2startup
+    plan: starter
+    region: oregon

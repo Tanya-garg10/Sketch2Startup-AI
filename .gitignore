@@ -1,6 +1,72 @@
-__pycache__/
-*.py[cod]
-.venv/
+# Dependencies
 node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
 dist/
+build/
+.venv/
+venv/
+ENV/
+
+# Environment variables
 .env
+.env.local
+.env.production
+.env.*.local
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+
+# Firebase
+firebase-debug.log
+firebase-debug.log*
+.firebaserc
+
+# Build output
+dist/
+build/
+.next/
+out/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Project specific
+dev.db
+server/dev.db
+*.overflow

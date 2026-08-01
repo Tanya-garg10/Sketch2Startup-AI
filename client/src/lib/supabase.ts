@@ -1,2 +1,3 @@
-import { createClient } from "@supabase/supabase-js";
-export const supabase=createClient(import.meta.env.VITE_SUPABASE_URL ?? "", import.meta.env.VITE_SUPABASE_ANON_KEY ?? "");
+// Supabase is not used in this project (Firebase is used instead).
+// This file is kept as a placeholder to avoid import errors.
+export const supabase = null

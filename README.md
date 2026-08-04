@@ -316,9 +316,9 @@ Planning, wireframes, architecture, and product design were prepared before deve
 ## 👩‍💻 Author
 
 **Tanya Garg**
-🎓 B.Tech Information Technology
-📧 Email: tanyagarg5315@gmail.com
-💻 GitHub: https://github.com/Tanya-garg10
+- 🎓 B.Tech Information Technology
+- 📧 Email: tanyagarg5315@gmail.com
+- 💻 GitHub: https://github.com/Tanya-garg10
 
 ## 📄 License
 

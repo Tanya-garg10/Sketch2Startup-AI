@@ -26,6 +26,19 @@ def _get_or_create_user(db: Session, current_user: dict) -> User:
         db.refresh(user)
     return user
 
+def _get_demo_user(db: Session) -> User:
+    """Get or create a demo user for testing without Firebase auth."""
+    user = db.query(User).filter(User.email == "demo@example.com").first()
+    if not user:
+        user = User(
+            email="demo@example.com",
+            firebase_uid="demo-user-123",
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    return user
+
 
 @router.get("/health")
 def health():
@@ -36,9 +49,13 @@ def health():
 def create_project(
     payload: ProjectCreate,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(optional_auth),
 ):
-    user = _get_or_create_user(db, current_user)
+    # Use demo user if no auth provided
+    if not current_user:
+        user = _get_demo_user(db)
+    else:
+        user = _get_or_create_user(db, current_user)
     p = Project(name=payload.name, description=payload.description, user_id=user.id)
     db.add(p)
     db.commit()
@@ -49,11 +66,15 @@ def create_project(
 @router.get("/projects", response_model=list[ProjectOut])
 def list_projects(
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(optional_auth),
 ):
-    user = db.query(User).filter(User.email == current_user.get("email")).first()
-    if not user:
-        return []
+    # Use demo user if no auth provided
+    if not current_user:
+        user = _get_demo_user(db)
+    else:
+        user = db.query(User).filter(User.email == current_user.get("email")).first()
+        if not user:
+            return []
     return (
         db.query(Project)
         .filter(Project.user_id == user.id)
@@ -67,11 +88,15 @@ def list_projects(
 def get_project(
     project_id: str,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(optional_auth),
 ):
-    user = db.query(User).filter(User.email == current_user.get("email")).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    # Use demo user if no auth provided
+    if not current_user:
+        user = _get_demo_user(db)
+    else:
+        user = db.query(User).filter(User.email == current_user.get("email")).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
     project = db.query(Project).filter(
         Project.id == project_id, Project.user_id == user.id
     ).first()
@@ -85,11 +110,15 @@ def update_project(
     project_id: str,
     payload: ProjectUpdate,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(optional_auth),
 ):
-    user = db.query(User).filter(User.email == current_user.get("email")).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    # Use demo user if no auth provided
+    if not current_user:
+        user = _get_demo_user(db)
+    else:
+        user = db.query(User).filter(User.email == current_user.get("email")).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
     project = db.query(Project).filter(
         Project.id == project_id, Project.user_id == user.id
     ).first()
@@ -110,11 +139,15 @@ def update_project(
 def delete_project(
     project_id: str,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(optional_auth),
 ):
-    user = db.query(User).filter(User.email == current_user.get("email")).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    # Use demo user if no auth provided
+    if not current_user:
+        user = _get_demo_user(db)
+    else:
+        user = db.query(User).filter(User.email == current_user.get("email")).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
     project = db.query(Project).filter(
         Project.id == project_id, Project.user_id == user.id
     ).first()
@@ -129,11 +162,13 @@ def delete_project(
 async def upload(
     file: UploadFile = File(...),
     project_id: Optional[str] = None,
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(optional_auth),
     db: Session = Depends(get_db),
 ):
     try:
-        file_url = await upload_to_firebase(file, current_user.get("uid", "anon"))
+        # Use demo user UID if no auth provided
+        uid = current_user.get("uid", "demo-user-123") if current_user else "demo-user-123"
+        file_url = await upload_to_firebase(file, uid)
         if project_id:
             project = db.query(Project).filter(Project.id == project_id).first()
             if project:
@@ -144,7 +179,7 @@ async def upload(
             "url": file_url,
             "storage": "firebase",
             "progress": 100,
-            "user": current_user.get("email"),
+            "user": current_user.get("email") if current_user else "demo@example.com",
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Upload failed: {e}")
@@ -154,7 +189,7 @@ async def upload(
 async def analyze(
     file: UploadFile = File(...),
     project_id: Optional[str] = None,
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(optional_auth),
     db: Session = Depends(get_db),
 ):
     try:
@@ -181,11 +216,15 @@ def get_project_artifacts(
     project_id: str,
     kind: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(optional_auth),
 ):
-    user = db.query(User).filter(User.email == current_user.get("email")).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    # Use demo user if no auth provided
+    if not current_user:
+        user = _get_demo_user(db)
+    else:
+        user = db.query(User).filter(User.email == current_user.get("email")).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
     project = db.query(Project).filter(
         Project.id == project_id, Project.user_id == user.id
     ).first()
@@ -202,16 +241,35 @@ def create_artifact(
     project_id: str,
     payload: ArtifactCreate,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(optional_auth),
 ):
-    user = db.query(User).filter(User.email == current_user.get("email")).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    # Use demo user if no auth provided
+    if not current_user:
+        user = _get_demo_user(db)
+    else:
+        user = db.query(User).filter(User.email == current_user.get("email")).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
     project = db.query(Project).filter(
         Project.id == project_id, Project.user_id == user.id
     ).first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+
+    # Upsert — replace existing artifact of same kind to avoid duplicates
+    existing = db.query(Artifact).filter(
+        Artifact.project_id == project_id,
+        Artifact.kind == payload.kind,
+    ).first()
+
+    if existing:
+        existing.content = payload.content
+        existing.markdown = payload.markdown
+        existing.file_path = payload.file_path
+        db.commit()
+        db.refresh(existing)
+        return existing
+
     artifact = Artifact(
         project_id=project_id,
         kind=payload.kind,
@@ -229,11 +287,15 @@ def create_artifact(
 def get_workflow_steps(
     project_id: str,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(optional_auth),
 ):
-    user = db.query(User).filter(User.email == current_user.get("email")).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    # Use demo user if no auth provided
+    if not current_user:
+        user = _get_demo_user(db)
+    else:
+        user = db.query(User).filter(User.email == current_user.get("email")).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
     project = db.query(Project).filter(
         Project.id == project_id, Project.user_id == user.id
     ).first()
@@ -253,13 +315,17 @@ def update_workflow_step(
     step_name: str,
     payload: WorkflowStepCreate,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(optional_auth),
 ):
     from datetime import datetime
 
-    user = db.query(User).filter(User.email == current_user.get("email")).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    # Use demo user if no auth provided
+    if not current_user:
+        user = _get_demo_user(db)
+    else:
+        user = db.query(User).filter(User.email == current_user.get("email")).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
     project = db.query(Project).filter(
         Project.id == project_id, Project.user_id == user.id
     ).first()
@@ -301,43 +367,96 @@ def update_workflow_step(
 # ---------------------------------------------------------------------------
 
 @router.post("/prd")
-async def run_prd(payload: AgentRun, current_user: dict = Depends(get_current_user)):
-    return run_agent("planner", payload.prompt or f"Generate PRD for project {payload.project_id}")
+async def run_prd(payload: AgentRun, current_user: dict = Depends(optional_auth), db: Session = Depends(get_db)):
+    analysis = None
+    if payload.project_id:
+        project = db.query(Project).filter(Project.id == payload.project_id).first()
+        if project and project.analysis_result:
+            analysis = project.analysis_result
+    return run_agent("planner", payload.prompt or f"Generate PRD for project {payload.project_id}", analysis)
 
 
 @router.post("/architecture")
-async def run_architecture(payload: AgentRun, current_user: dict = Depends(get_current_user)):
-    return run_agent("architect", payload.prompt or "Design system architecture")
+async def run_architecture(payload: AgentRun, current_user: dict = Depends(optional_auth), db: Session = Depends(get_db)):
+    analysis = None
+    if payload.project_id:
+        project = db.query(Project).filter(Project.id == payload.project_id).first()
+        if project and project.analysis_result:
+            analysis = project.analysis_result
+    return run_agent("architect", payload.prompt or "Design system architecture", analysis)
 
 
 @router.post("/database")
-async def run_database(payload: AgentRun, current_user: dict = Depends(get_current_user)):
-    return run_agent("database", payload.prompt or "Generate database schema")
+async def run_database(payload: AgentRun, current_user: dict = Depends(optional_auth), db: Session = Depends(get_db)):
+    analysis = None
+    if payload.project_id:
+        project = db.query(Project).filter(Project.id == payload.project_id).first()
+        if project and project.analysis_result:
+            analysis = project.analysis_result
+    return run_agent("database", payload.prompt or "Generate database schema", analysis)
 
 
 @router.post("/apis")
-async def run_apis(payload: AgentRun, current_user: dict = Depends(get_current_user)):
-    return run_agent("api", payload.prompt or "Generate REST API endpoints")
+async def run_apis(payload: AgentRun, current_user: dict = Depends(optional_auth), db: Session = Depends(get_db)):
+    analysis = None
+    if payload.project_id:
+        project = db.query(Project).filter(Project.id == payload.project_id).first()
+        if project and project.analysis_result:
+            analysis = project.analysis_result
+    return run_agent("api", payload.prompt or "Generate REST API endpoints", analysis)
 
 
 @router.post("/frontend")
-async def run_frontend(payload: AgentRun, current_user: dict = Depends(get_current_user)):
-    return run_agent("builder", payload.prompt or "Generate React frontend code")
+async def run_frontend(payload: AgentRun, current_user: dict = Depends(optional_auth), db: Session = Depends(get_db)):
+    analysis = None
+    if payload.project_id:
+        project = db.query(Project).filter(Project.id == payload.project_id).first()
+        if project and project.analysis_result:
+            analysis = project.analysis_result
+    return run_agent("builder", payload.prompt or "Generate React frontend code", analysis)
 
 
 @router.post("/backend")
-async def run_backend(payload: AgentRun, current_user: dict = Depends(get_current_user)):
-    return run_agent("builder", payload.prompt or "Generate FastAPI backend code")
+async def run_backend(payload: AgentRun, current_user: dict = Depends(optional_auth), db: Session = Depends(get_db)):
+    analysis = None
+    if payload.project_id:
+        project = db.query(Project).filter(Project.id == payload.project_id).first()
+        if project and project.analysis_result:
+            analysis = project.analysis_result
+    return run_agent("builder", payload.prompt or "Generate FastAPI backend code", analysis)
 
 
 @router.post("/tests")
-async def run_tests(payload: AgentRun, current_user: dict = Depends(get_current_user)):
-    return run_agent("tester", payload.prompt or "Generate test suites")
+async def run_tests(payload: AgentRun, current_user: dict = Depends(optional_auth), db: Session = Depends(get_db)):
+    from app.services.agents import run_agent
+    analysis = None
+    if payload.project_id:
+        project = db.query(Project).filter(Project.id == payload.project_id).first()
+        if project and project.analysis_result:
+            analysis = project.analysis_result
+    return run_agent("tester", payload.prompt or "Generate test suites", analysis)
 
 
 @router.post("/docs")
-async def run_docs(payload: AgentRun, current_user: dict = Depends(get_current_user)):
-    return run_agent("documentation", payload.prompt or "Generate documentation")
+async def run_docs(payload: AgentRun, current_user: dict = Depends(optional_auth), db: Session = Depends(get_db)):
+    from app.services.agents import run_agent
+    analysis = None
+    if payload.project_id:
+        project = db.query(Project).filter(Project.id == payload.project_id).first()
+        if project and project.analysis_result:
+            analysis = project.analysis_result
+    return run_agent("documentation", payload.prompt or "Generate documentation", analysis)
+
+
+@router.post("/deployment")
+async def run_deployment(payload: AgentRun, current_user: dict = Depends(optional_auth), db: Session = Depends(get_db)):
+    from app.services.agents import run_agent
+    analysis = None
+    if payload.project_id:
+        project = db.query(Project).filter(Project.id == payload.project_id).first()
+        if project and project.analysis_result:
+            analysis = project.analysis_result
+    return run_agent("deployment", payload.prompt or "Generate deployment configurations", analysis)
 
 
 # ---------------------------------------------------------------------------
@@ -345,7 +464,10 @@ async def run_docs(payload: AgentRun, current_user: dict = Depends(get_current_u
 # ---------------------------------------------------------------------------
 
 @router.post("/auth/verify")
-async def verify_auth(current_user: dict = Depends(get_current_user)):
+async def verify_auth(current_user: dict = Depends(optional_auth)):
+    # Return demo user if no auth provided
+    if not current_user:
+        return {"status": "authenticated", "user": {"email": "demo@example.com", "uid": "demo-user-123", "is_demo": True}}
     return {"status": "authenticated", "user": current_user}
 
 
@@ -353,4 +475,5 @@ async def verify_auth(current_user: dict = Depends(get_current_user)):
 async def auth_status(current_user: Optional[dict] = Depends(optional_auth)):
     if current_user:
         return {"status": "authenticated", "user": current_user}
-    return {"status": "unauthenticated"}
+    # Return demo user if no auth provided
+    return {"status": "authenticated", "user": {"email": "demo@example.com", "uid": "demo-user-123", "is_demo": True}}

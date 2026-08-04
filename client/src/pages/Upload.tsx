@@ -53,10 +53,28 @@ export function Upload() {
       })
       setProjectId(project.id)
 
-      // Upload file
-      const formData = new FormData()
-      formData.append("file", file)
-      formData.append("project_id", project.id)
+      // Read file as blob for reuse
+      const fileBlob = await file.arrayBuffer()
+      const fileBlobObject = new Blob([fileBlob], { type: file.type })
+
+      // Analyze the file first
+      setAnalyzing(true)
+      const analyzeForm = new FormData()
+      analyzeForm.append("file", new File([fileBlob], file.name, { type: file.type }))
+      analyzeForm.append("project_id", project.id)
+      const analyzeRes = await api("/analyze", {
+        method: "POST",
+        body: analyzeForm,
+      })
+
+      setResult(analyzeRes)
+      setAnalyzing(false)
+
+      // Upload file with fresh FormData
+      setUploading(true)
+      const uploadForm = new FormData()
+      uploadForm.append("file", new File([fileBlob], file.name, { type: file.type }))
+      uploadForm.append("project_id", project.id)
 
       // Simulate upload progress
       const progressInterval = setInterval(() => {
@@ -69,23 +87,18 @@ export function Upload() {
         })
       }, 200)
 
-      const uploadRes = await api("/uploads", { method: "POST", body: formData })
+      const uploadRes = await api("/uploads", { method: "POST", body: uploadForm })
       setUploadProgress(100)
       clearInterval(progressInterval)
 
-      // Analyze the uploaded file
-      setAnalyzing(true)
-      const analyzeRes = await api("/analyze", {
-        method: "POST",
-        body: formData
-      })
-
-      setResult(analyzeRes)
-
-      // Update project with analysis result
+      // Update project with analysis result and description from vision
+      const appDesc = analyzeRes.app_description || ""
       await api(`/projects/${project.id}`, {
         method: "PUT",
-        body: JSON.stringify({ status: "analyzing" }),
+        body: JSON.stringify({
+          status: "analyzed",
+          description: appDesc || `Sketch upload: ${file.name}`,
+        }),
       })
 
     } catch (err: any) {
@@ -226,8 +239,78 @@ export function Upload() {
               <p className="text-sm text-slate-400 mt-1">
                 Your sketch has been analyzed successfully. AI detected {result.elements?.length || 0} UI elements.
               </p>
+              {result.app_description && (
+                <p className="text-sm text-cyan-300 mt-2 font-medium">"{result.app_description}"</p>
+              )}
+              <p className="text-xs text-slate-500 mt-1">
+                Analyzed by: {result.analyzed_by === "gemini-vision" ? "🤖 Gemini Vision AI" : result.analyzed_by === "text-analysis" ? "📚 Context Analysis" : "🔧 Mock Analysis"}
+              </p>
             </div>
           </div>
+
+          {/* App Type and Name */}
+          {(result.app_type || result.app_name) && (
+            <div className="space-y-3 mb-6">
+              <h4 className="font-medium text-slate-200">Application Details:</h4>
+              <div className="flex flex-wrap gap-2">
+                {result.app_type && (
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <Sparkles className="h-3 w-3 text-violet-400" />
+                    Type: {result.app_type}
+                  </Badge>
+                )}
+                {result.app_name && (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    <Sparkles className="h-3 w-3 text-cyan-400" />
+                    {result.app_name}
+                  </Badge>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Detected Features */}
+          {result.features && result.features.length > 0 && (
+            <div className="space-y-3 mb-6">
+              <h4 className="font-medium text-slate-200">Detected Features:</h4>
+              <div className="flex flex-wrap gap-2">
+                {result.features.map((feature: string, index: number) => (
+                  <Badge key={index} variant="outline" className="flex items-center gap-1">
+                    <Sparkles className="h-3 w-3 text-green-400" />
+                    {feature}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* User Flows */}
+          {result.user_flows && result.user_flows.length > 0 && (
+            <div className="space-y-3 mb-6">
+              <h4 className="font-medium text-slate-200">User Flows:</h4>
+              <div className="space-y-2">
+                {result.user_flows.map((flow: string, index: number) => (
+                  <div key={index} className="text-sm text-slate-300 bg-slate-800/50 p-2 rounded">
+                    {flow}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Data Requirements */}
+          {result.data_requirements && result.data_requirements.length > 0 && (
+            <div className="space-y-3 mb-6">
+              <h4 className="font-medium text-slate-200">Data Requirements:</h4>
+              <div className="flex flex-wrap gap-2">
+                {result.data_requirements.map((req: string, index: number) => (
+                  <Badge key={index} variant="secondary">
+                    {req}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="space-y-3 mb-6">
             <h4 className="font-medium text-slate-200">Detected Elements:</h4>
@@ -235,7 +318,7 @@ export function Upload() {
               {result.elements?.map((element: any, index: number) => (
                 <Badge key={index} variant="outline" className="flex items-center gap-1">
                   <Sparkles className="h-3 w-3 text-cyan-400" />
-                  {element.type} ({Math.round(element.confidence * 100)}%)
+                  {element.type} {element.confidence ? `(${Math.round(element.confidence * 100)}%)` : ''}
                 </Badge>
               ))}
             </div>
@@ -251,6 +334,21 @@ export function Upload() {
               ))}
             </div>
           </div>
+
+          {/* Suggestions */}
+          {result.suggestions && result.suggestions.length > 0 && (
+            <div className="space-y-3 mb-6">
+              <h4 className="font-medium text-slate-200">AI Suggestions:</h4>
+              <div className="space-y-2">
+                {result.suggestions.map((suggestion: string, index: number) => (
+                  <div key={index} className="text-sm text-slate-300 bg-slate-800/50 p-2 rounded flex items-start gap-2">
+                    <span className="text-cyan-400">•</span>
+                    {suggestion}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <Button
             className="w-full bg-gradient-to-r from-violet-500 to-cyan-500 hover:from-violet-600 hover:to-cyan-600"

@@ -1,11 +1,17 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 from app.api.routes import router
 from app.core.config import settings
 from app.db.session import Base, engine
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
+
+# Ensure local uploads directory exists
+UPLOADS_DIR = Path(__file__).resolve().parent.parent / "uploads"
+UPLOADS_DIR.mkdir(exist_ok=True)
 
 app = FastAPI(
     title="Sketch2Startup AI API",
@@ -24,6 +30,9 @@ app.add_middleware(
 
 # Include API routes
 app.include_router(router)
+
+# Serve locally uploaded files
+app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 
 @app.on_event("startup")
 async def startup_event():

@@ -1,9 +1,11 @@
 export interface Project {
   id: string
   name: string
-  status: "draft" | "analyzing" | "generating" | "completed" | "failed"
+  description?: string
+  status: "draft" | "analyzing" | "analyzed" | "generating" | "completed" | "failed"
+  upload_url?: string
   created_at: string
-  last_updated?: string
+  updated_at?: string
   user_id?: string
 }
 

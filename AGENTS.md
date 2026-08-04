@@ -95,6 +95,8 @@ npm run lint
 - SQLAlchemy
 - PostgreSQL (production) / SQLite (development)
 - Firebase Admin SDK
+- Groq LLM (llama-3.3-70b)
+- Tavily Search API
 
 ## Environment Variables
 
@@ -105,7 +107,8 @@ CORS_ORIGINS=http://localhost:5173
 FIREBASE_PROJECT_ID=your-firebase-project-id
 FIREBASE_STORAGE_BUCKET=your-firebase-storage-bucket
 FIREBASE_SERVICE_ACCOUNT_JSON={"type":"service_account",...}
-OPENAI_API_KEY=your-openai-api-key
+TAVILY_API_KEY=your-tavily-api-key
+GROQ_API_KEY=your-groq-api-key
 DEMO_MODE=false
 ```
 

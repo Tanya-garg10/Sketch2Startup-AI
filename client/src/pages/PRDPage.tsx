@@ -3,7 +3,6 @@ import { useSearchParams } from "react-router-dom"
 import { Card } from "../components/ui/card"
 import { Button } from "../components/ui/button"
 import { Textarea } from "../components/ui/textarea"
-import { Input } from "../components/ui/input"
 import { Label } from "../components/ui/label"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../components/ui/tabs"
 import { Badge } from "../components/ui/badge"
@@ -17,6 +16,7 @@ export function PRDPage() {
   const [generating, setGenerating] = useState(false)
   const [prd, setPrd] = useState<any>(null)
   const [copied, setCopied] = useState(false)
+  const [error, setError] = useState("")
 
   useEffect(() => {
     if (projectId) {
@@ -30,7 +30,21 @@ export function PRDPage() {
     try {
       const artifacts = await api<any[]>(`/projects/${projectId}/artifacts?kind=prd`)
       if (artifacts.length > 0) {
-        setPrd(artifacts[0].content)
+        const raw = artifacts[0].content
+        // Normalize field names in case they were stored with AI-returned variations
+        const normalized = {
+          project_name: raw.project_name || raw.title || raw.name || "Untitled Project",
+          problem_statement: raw.problem_statement || raw.problem || raw.overview || "",
+          solution: raw.solution || raw.description || "",
+          target_users: Array.isArray(raw.target_users) ? raw.target_users : (raw.target_users ? [raw.target_users] : (raw.users || raw.audience || [])),
+          user_stories: Array.isArray(raw.user_stories) ? raw.user_stories : (raw.stories || []),
+          functional_requirements: Array.isArray(raw.functional_requirements) ? raw.functional_requirements : (raw.requirements || raw.features || []),
+          non_functional_requirements: Array.isArray(raw.non_functional_requirements) ? raw.non_functional_requirements : (raw.nfr || raw.constraints || []),
+          tech_stack: Array.isArray(raw.tech_stack) ? raw.tech_stack : (raw.technologies || raw.stack || []),
+          acceptance_criteria: Array.isArray(raw.acceptance_criteria) ? raw.acceptance_criteria : (raw.criteria || []),
+          future_scope: Array.isArray(raw.future_scope) ? raw.future_scope : (raw.roadmap || raw.next_steps || []),
+        }
+        setPrd(normalized)
       }
     } catch (error) {
       console.error("Failed to fetch PRD:", error)
@@ -42,25 +56,67 @@ export function PRDPage() {
   const generatePRD = async () => {
     if (!projectId) return
     setGenerating(true)
+    setError("")
+    setPrd(null)
     try {
+      // Fetch project description (from vision analysis)
+      let projectDesc = ""
+      try {
+        const project = await api<any>(`/projects/${projectId}`)
+        projectDesc = project.description || ""
+      } catch { }
+
+      const prompt = projectDesc
+        ? `Generate PRD for: ${projectDesc}`
+        : "Generate PRD for a web application"
+
       const result = await api<any>("/prd", {
         method: "POST",
-        body: JSON.stringify({ project_id: projectId, prompt: "Generate PRD" }),
+        body: JSON.stringify({ project_id: projectId, prompt }),
       })
 
-      // Save as artifact
+      // Normalize output — AI sometimes returns slightly different key names
+      let output = result?.output
+      if (!output) {
+        throw new Error("AI returned no output. Please try again.")
+      }
+
+      // Normalize common field name variations
+      output = {
+        project_name: output.project_name || output.title || output.name || "Untitled Project",
+        problem_statement: output.problem_statement || output.problem || output.overview || "",
+        solution: output.solution || output.description || "",
+        target_users: output.target_users || output.users || output.audience || [],
+        user_stories: output.user_stories || output.stories || [],
+        functional_requirements: output.functional_requirements || output.requirements || output.features || [],
+        non_functional_requirements: output.non_functional_requirements || output.nfr || output.constraints || [],
+        tech_stack: output.tech_stack || output.technologies || output.stack || [],
+        acceptance_criteria: output.acceptance_criteria || output.criteria || [],
+        future_scope: output.future_scope || output.roadmap || output.next_steps || [],
+      }
+
+      // Ensure all array fields are actually arrays
+      const arrayFields = ["target_users", "user_stories", "functional_requirements", "non_functional_requirements", "tech_stack", "acceptance_criteria", "future_scope"] as const
+      for (const field of arrayFields) {
+        if (!Array.isArray(output[field])) {
+          output[field] = output[field] ? [String(output[field])] : []
+        }
+      }
+
+      // Upsert artifact
       await api(`/projects/${projectId}/artifacts`, {
         method: "POST",
         body: JSON.stringify({
           kind: "prd",
-          content: result.output,
-          markdown: generateMarkdown(result.output),
+          content: output,
+          markdown: generateMarkdown(output),
         }),
       })
 
-      setPrd(result.output)
-    } catch (error) {
-      console.error("Failed to generate PRD:", error)
+      setPrd(output)
+    } catch (err: any) {
+      console.error("Failed to generate PRD:", err)
+      setError(err.message || "Generation failed. Please try again.")
     } finally {
       setGenerating(false)
     }
@@ -146,6 +202,14 @@ ${content.future_scope.map((scope: string) => `- ${scope}`).join('\n')}
                 <Download className="h-4 w-4 mr-2" />
                 Download
               </Button>
+              <Button
+                variant="outline"
+                onClick={generatePRD}
+                disabled={generating}
+              >
+                {generating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
+                {generating ? "Regenerating..." : "Regenerate"}
+              </Button>
             </>
           )}
           {!prd && (
@@ -169,6 +233,12 @@ ${content.future_scope.map((scope: string) => `- ${scope}`).join('\n')}
           )}
         </div>
       </div>
+
+      {error && (
+        <div className="flex items-start gap-3 rounded-xl bg-red-900/20 border border-red-500/30 p-4">
+          <span className="text-red-400 text-sm">⚠ {error}</span>
+        </div>
+      )}
 
       {prd ? (
         <Tabs defaultValue="content" className="space-y-6">

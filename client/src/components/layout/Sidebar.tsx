@@ -12,6 +12,7 @@ import {
   Sparkles,
   FolderKanban,
   Server,
+  Rocket,
 } from "lucide-react"
 import { cn } from "../../lib/utils"
 
@@ -26,6 +27,7 @@ const navigation = [
   { name: "Backend", href: "/backend", icon: Server },
   { name: "Testing", href: "/testing", icon: TestTube2 },
   { name: "Documentation", href: "/documentation", icon: BookOpen },
+  { name: "Deployment", href: "/deployment", icon: Rocket },
   { name: "Projects", href: "/projects", icon: FolderKanban },
   { name: "Settings", href: "/settings", icon: Settings },
 ]

@@ -28,6 +28,7 @@ const generatorRoutes = [
   { path: "backend", title: "Backend" },
   { path: "testing", title: "Testing" },
   { path: "documentation", title: "Documentation" },
+  { path: "deployment", title: "Deployment" },
 ]
 
 createRoot(document.getElementById("root")!).render(
@@ -43,6 +44,7 @@ createRoot(document.getElementById("root")!).render(
             <Route path="upload" element={<Upload />} />
             <Route path="prd" element={<PRDPage />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="projects" element={<Dashboard />} />
             {generatorRoutes.map(({ path, title }) => (
               <Route key={path} path={path} element={<GeneratorPage title={title} />} />
             ))}

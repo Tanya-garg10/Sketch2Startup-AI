@@ -1,8 +1,10 @@
 import json
 import uuid
+import shutil
 from functools import lru_cache
 from typing import Optional
 from datetime import datetime
+from pathlib import Path
 
 import firebase_admin
 from firebase_admin import auth, credentials, storage
@@ -10,6 +12,10 @@ from fastapi import HTTPException, Security, status, UploadFile
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.core.config import settings
+
+# Local uploads directory (used when Firebase Storage is unavailable)
+LOCAL_UPLOADS_DIR = Path(__file__).resolve().parents[2] / "uploads"
+LOCAL_UPLOADS_DIR.mkdir(exist_ok=True)
 
 security = HTTPBearer()
 
@@ -72,36 +78,37 @@ async def optional_auth(credentials: Optional[HTTPAuthorizationCredentials] = Se
 
 
 async def upload_to_firebase(file: UploadFile, user_uid: str) -> str:
-    """Upload file to Firebase Storage and return the public URL."""
-    try:
-        if not settings.firebase_storage_bucket:
-            # In demo mode, return a fake URL
-            return f"https://demo-storage.example.com/{user_uid}/{file.filename}"
-        
-        app = get_firebase_app()
-        bucket = storage.bucket()
-        
-        # Generate unique filename
-        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-        unique_filename = f"{user_uid}/{timestamp}_{uuid.uuid4().hex[:8]}_{file.filename}"
-        
-        # Upload file
-        blob = bucket.blob(unique_filename)
-        content = await file.read()
-        blob.upload_from_string(content, content_type=file.content_type)
-        
-        # Make file public
-        blob.make_public()
-        
-        return blob.public_url
-    except Exception as e:
-        # If upload fails, return a demo URL
-        if settings.demo_mode:
-            return f"https://demo-storage.example.com/{user_uid}/{file.filename}"
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to upload file: {str(e)}"
-        )
+    """Upload file to Firebase Storage, falling back to local storage if unavailable."""
+    content = await file.read()
+
+    # Try Firebase Storage first
+    if settings.firebase_storage_bucket:
+        try:
+            app = get_firebase_app()
+            bucket = storage.bucket()
+            timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+            unique_filename = f"{user_uid}/{timestamp}_{uuid.uuid4().hex[:8]}_{file.filename}"
+            blob = bucket.blob(unique_filename)
+            blob.upload_from_string(content, content_type=file.content_type)
+            blob.make_public()
+            return blob.public_url
+        except Exception as e:
+            print(f"Firebase Storage unavailable ({e}), falling back to local storage")
+
+    # Local storage fallback
+    return _save_locally(content, file.filename or "upload", file.content_type, user_uid)
+
+
+def _save_locally(content: bytes, filename: str, content_type: str, user_uid: str) -> str:
+    """Save file to local uploads directory and return a local URL."""
+    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    safe_name = f"{timestamp}_{uuid.uuid4().hex[:8]}_{filename}"
+    user_dir = LOCAL_UPLOADS_DIR / user_uid
+    user_dir.mkdir(parents=True, exist_ok=True)
+    dest = user_dir / safe_name
+    dest.write_bytes(content)
+    # Return a URL that the /uploads static route will serve
+    return f"http://localhost:8000/uploads/{user_uid}/{safe_name}"
 
 
 def delete_from_firebase(file_url: str) -> bool:

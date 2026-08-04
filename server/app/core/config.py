@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     firebase_service_account_json: str = ""
     tavily_api_key: str = ""
     groq_api_key: str = ""
+    gemini_api_key: str = ""
+    anthropic_api_key: str = ""
 
     # Demo mode — set explicitly via env var; auto-detected only as fallback
     demo_mode: bool = False
@@ -24,7 +26,7 @@ class Settings(BaseSettings):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         if not self.demo_mode:
-            has_ai = bool(self.tavily_api_key or self.groq_api_key or self.firebase_project_id)
+            has_ai = bool(self.tavily_api_key or self.groq_api_key)
             if not has_ai:
                 object.__setattr__(self, "demo_mode", True)
                 print("Warning: Running in DEMO MODE — no credentials found")
@@ -32,8 +34,7 @@ class Settings(BaseSettings):
                 active = []
                 if self.groq_api_key:    active.append("Groq")
                 if self.tavily_api_key:  active.append("Tavily")
-                if self.firebase_project_id: active.append("Firebase")
-                print(f"Running in PRODUCTION MODE — active: {', '.join(active)}")
+                print(f"Running in PRODUCTION MODE — active: {', '.join(active)} (Demo Auth)")
 
 
 settings = Settings()

@@ -8,8 +8,6 @@
 ![Python](https://img.shields.io/badge/Python-3.12-yellow?style=for-the-badge&logo=python)
 ![MIT](https://img.shields.io/badge/License-MIT-success?style=for-the-badge)
 
----
-
 ## 💡 Problem Statement
 
 Turning a simple idea into a working application is time-consuming. A single sketch must go through multiple stages:
@@ -41,8 +39,6 @@ This process often takes days or even weeks.
 - Deployment Configurations
 
 All from a single sketch.
-
----
 
 ## ✨ Features
 
@@ -104,8 +100,6 @@ All from a single sketch.
 - Docker Support
 - CI/CD Pipelines
 
----
-
 ## 🤖 AI Agent Workflow
 
 | AI Agent | Responsibility |
@@ -120,8 +114,6 @@ All from a single sketch.
 | 📚 Documentation Agent | Generates project documentation |
 | 🚀 Deployment Agent | Creates deployment configuration |
 
----
-
 ## 🔄 Workflow
 
 ```
@@ -129,8 +121,6 @@ Upload Sketch → Vision Analysis → PRD Generation → Architecture Design →
 Database Schema → REST API Generation → Frontend Generation → 
 Backend Generation → Testing → Documentation → Deployment
 ```
-
----
 
 ## 🏗 Tech Stack
 
@@ -162,8 +152,6 @@ Backend Generation → Testing → Documentation → Deployment
 - **Vercel** - Frontend Deployment
 - **Render** - Backend Deployment
 - **Docker** - Containerization
-
----
 
 ## 📂 Project Structure
 
@@ -202,8 +190,6 @@ Sketch2Startup-AI/
 └── README.md
 ```
 
----
-
 ## ⚡ How It Works
 
 ### Step 1: Upload Sketch
@@ -235,8 +221,6 @@ Documentation Agent creates complete project documentation
 
 ### Step 10: Deployment
 Deployment Agent prepares deployment configurations
-
----
 
 ## 🚀 Installation
 
@@ -291,8 +275,6 @@ VITE_FIREBASE_PROJECT_ID=your-firebase-project-id
 VITE_FIREBASE_STORAGE_BUCKET=your-firebase-storage-bucket
 ```
 
----
-
 ## 🌐 Deployment
 
 ### Frontend (Vercel)
@@ -311,8 +293,6 @@ VITE_FIREBASE_STORAGE_BUCKET=your-firebase-storage-bucket
 docker-compose up -d
 ```
 
----
-
 ## 🧪 Testing
 
 ### Backend Tests
@@ -327,33 +307,22 @@ cd client
 npm test
 ```
 
----
-
 ## 🧠 Built with ChatGPT Codex
 
 This project was built for the **ChatGPT Codex Hackathon 2026**.
 
 Planning, wireframes, architecture, and product design were prepared before development, while **ChatGPT Codex** was used for code generation, debugging, refactoring, and iterative implementation of the application.
 
----
-
 ## 👩‍💻 Author
 
 **Tanya Garg**
-
 🎓 B.Tech Information Technology
-
 📧 Email: tanyagarg5315@gmail.com
-
 💻 GitHub: https://github.com/Tanya-garg10
-
----
 
 ## 📄 License
 
 This project is licensed under the MIT License.
-
----
 
 ## ⭐ Acknowledgments
 
@@ -363,18 +332,12 @@ This project is licensed under the MIT License.
 - **Firebase** for authentication and storage
 - **shadcn/ui** for beautiful UI components
 
----
-
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
----
-
-## � Support
+## Support
 
 For support, email tanyagarg5315@gmail.com or open an issue in the GitHub repository.
-
----
 
 **⭐ If you like this project, please give it a star!**
